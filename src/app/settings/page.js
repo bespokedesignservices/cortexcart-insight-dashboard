@@ -146,63 +146,45 @@ const IntegrationsTabContent = () => {
     );
 };
 
-const SocialConnectionsTabContent = () => {
+const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => {
     const searchParams = useSearchParams(); // FIX: Use the hook here
-    const [connectionStatus, setConnectionStatus] = useState({ x: false, facebook: false, pinterest: false, youtube: false });
+    const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
+    const [activePageId, setActivePageId] = useState(null); 
     const [facebookPages, setFacebookPages] = useState([]);
     const [instagramAccounts, setInstagramAccounts] = useState([]);
-    const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
-    const [, setIsLoading] = useState(false); 
-    const [activePageId, setActivePageId] = useState(null); 
- 
-    const fetchConnections = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const statusRes = await fetch('/api/social/connections/status');
-            if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
-            
-            const statuses = await statusRes.json();
-            setConnectionStatus(statuses);
 
-            if (statuses.facebook) {
-                const [pagesRes, igRes, activePageRes] = await Promise.all([
-                    fetch('/api/social/facebook/pages'),
-                    fetch('/api/social/instagram/accounts'),
-                    fetch('/api/social/facebook/active-page')
-                ]);
+    useEffect(() => {
+        const fetchPageData = async () => {
+            if (connectionStatus.facebook) {
+                try {
+                    const [pagesRes, igRes, activePageRes] = await Promise.all([
+                        fetch('/api/social/facebook/pages'),
+                        fetch('/api/social/instagram/accounts'),
+                        fetch('/api/social/facebook/active-page')
+                    ]);
 
-                if (pagesRes.ok) setFacebookPages(await pagesRes.json());
-                if (igRes.ok) setInstagramAccounts(await igRes.json());
-                if (activePageRes.ok) setActivePageId((await activePageRes.json()).active_facebook_page_id);
-                
+                    if (pagesRes.ok) setFacebookPages(await pagesRes.json());
+                    if (igRes.ok) setInstagramAccounts(await igRes.json());
+                    if (activePageRes.ok) setActivePageId((await activePageRes.json()).active_facebook_page_id);
+                } catch (err) {
+                    console.error("Failed to fetch connection data:", err);
+                    setAlert({ show: true, message: err.message, type: 'danger' });
+                }
             } else {
+                // If not connected, clear the data
                 setFacebookPages([]);
                 setInstagramAccounts([]);
             }
-        } catch (err) {
-            console.error("Failed to fetch connection data:", err);
-            setAlert({ show: true, message: err.message, type: 'danger' });
-        } finally {
-            setIsLoading(false);
-        }
-    }, [setIsLoading]); // FIX: Removed fetchConnections from its own dependency array
-
-    useEffect(() => {
-        fetchConnections();
-        const connectStatus = searchParams.get('connect_status');
+        };
+         fetchPageData();
+    const connectStatus = searchParams.get('connect_status');
         if (connectStatus) {
             const message = connectStatus === 'success' 
                 ? 'Account connected successfully!' 
                 : searchParams.get('message')?.replace(/_/g, ' ') || 'An unknown error occurred.';
             setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
-            
-            // FIX: Clean the URL after showing the message
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, '', newUrl);
-
-            setTimeout(() => setAlert({ show: false, message: '', type: 'info' }), 5000);
         }
-    }, [fetchConnections, searchParams]);
+    }, [connectionStatus, searchParams]); // This now correctly depends on the prop
 
     const handleDisconnect = async (platform) => {
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
@@ -271,7 +253,7 @@ const SocialConnectionsTabContent = () => {
                                         {facebookPages.map(page => (
                                             <li key={page.page_id} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
                                                 <div className="flex items-center">
-                                                    {page.picture?.data?.url && <Image src={page.picture.data.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" />}
+                                                    {page.picture?.data?.url && <Image src={page.picture.data.url} alt={page.name} className="h-8 w-8 rounded-full mr-3" width={32} height={32}/>}
                                                     <span className="text-sm font-medium text-gray-700">{page.name}</span>
                                                 </div>
                                                 {page.page_id === activePageId ? (
@@ -361,43 +343,14 @@ const SocialConnectionsTabContent = () => {
     );
 };
 
-// --- Platforms Tab Content ---
-const PlatformsTabContent = () => {
-    const searchParams = useSearchParams(); // FIX: Use the hook here
-    const [connectionStatus, setConnectionStatus] = useState({ pinterest: false, shopify: false, youtube: false });
-    const [shopifyStore, setShopifyStore] = useState('');
+// --- New Platforms Component ---
+const PlatformsTabContent = ({ connectionStatus, fetchConnections }) => {
+    // It also receives connectionStatus and fetchConnections as props
+    const [shopifyStore, setShopifyStore] = useState(''); // FIX: Added setShopifyStore to fix the error
     const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
 
-    const fetchConnections = useCallback(async () => {
-        try {
-            const statusRes = await fetch('/api/social/connections/status');
-            if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
-            const statuses = await statusRes.json();
-            setConnectionStatus(statuses);
-        } catch (err) {
-            console.error("Failed to fetch platform connection data:", err);
-            setAlert({ show: true, message: err.message, type: 'danger' });
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchConnections();
-        const connectStatus = searchParams.get('connect_status');
-        if (connectStatus) {
-            const message = connectStatus === 'success' 
-                ? 'Platform connected successfully!' 
-                : searchParams.get('message')?.replace(/_/g, ' ') || 'An unknown error occurred.';
-            setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
-            
-            // FIX: Clean the URL after showing the message
-            const newUrl = window.location.pathname;
-            window.history.replaceState({}, '', newUrl);
-
-            setTimeout(() => setAlert({ show: false, message: '', type: 'info' }), 5000);
-        }
-    }, [fetchConnections, searchParams]);
-
     const handleDisconnect = async (platform) => {
+        // This function now uses the fetchConnections prop from the parent
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
         try {
             const res = await fetch('/api/social/connections/status', {
@@ -406,16 +359,17 @@ const PlatformsTabContent = () => {
                 body: JSON.stringify({ platform }),
             });
             if (!res.ok) throw new Error((await res.json()).message || `Could not disconnect ${platform}.`);
-            await fetchConnections(); 
+            await fetchConnections(); // Call the function from props
             setAlert({ show: true, message: `${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnected successfully!`, type: 'success' });
         } catch (err) {
             console.error(`Could not disconnect ${platform}:`, err);
             setAlert({ show: true, message: err.message, type: 'danger' });
         }
     };
-
+    
+    // The JSX for this component remains the same
     return (
-        <div className="max-w-3xl space-y-4">
+       <div className="max-w-3xl space-y-4">
             {alert.show && <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} />}
             <h3 className="text-lg font-medium leading-6 text-gray-900">Platform Integrations</h3>
             <p className="mt-1 text-sm text-gray-500">Connect your e-commerce and other platforms.</p>
@@ -424,7 +378,7 @@ const PlatformsTabContent = () => {
                 <p className="font-semibold">Shopify</p>
                 <p className="text-sm text-gray-500">Connect your Shopify store to link social media performance to sales.</p>
                 {connectionStatus.shopify ? (
-                    <div className="flex items-center gap-x-4 mt-2">
+ <div className="flex items-center gap-x-4 mt-2">
                         <span className="flex items-center text-sm font-medium text-green-600"><CheckCircleIcon className="h-5 w-5 mr-1.5" />Connected</span>
                         <button onClick={() => handleDisconnect('shopify')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
                     </div>
@@ -451,38 +405,110 @@ const PlatformsTabContent = () => {
                     </form>
                 )}
             </div>
+ {/* --- THIS IS THE NEW MAILCHIMP Connection --- */}
+             <div className="mt-4 p-4 border rounded-lg">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="font-semibold">Mailchimp</p>
+                        <p className="text-sm text-gray-500">Connect your Mailchimp account to sync audience and campaign data.</p>
+                    </div>
+                    {/* This will show a "Connected" status or a "Connect" button */}
+ {connectionStatus.mailchimp ? (
+                        <div className="flex items-center gap-x-4">
+                            <span className="flex items-center text-sm font-medium text-green-600">
+                                <CheckCircleIcon className="h-5 w-5 mr-1.5" />
+                                Connected
+                            </span>
+                            <button 
+                                onClick={() => handleDisconnect('mailchimp')} 
+                                className="text-sm font-medium text-red-600 hover:text-red-800"
+                            >
+                                Disconnect
+                            </button>
+                        </div>
+                    ) : (
+                        <a 
+                            href="/api/connect/mailchimp" 
+                            className="rounded-md bg-yellow-500 px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-yellow-400"
+                        >
+                            Connect Mailchimp
+                        </a>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
-
-// --- Widget Settings Component ---
-const WidgetSettingsTabContent = ({ siteId }) => {
-    const [mainSnippet, setMainSnippet] = useState('');
+// --- NEW, MORE ROBUST WIDGET SETTINGS COMPONENT ---
+const WidgetSettingsTabContent = () => {
+    // We now manage the siteId and the snippet in local state
+    const [siteId, setSiteId] = useState(null);
+    const [mainSnippet, setMainSnippet] = useState('Loading your widget code...');
     const [isCopied, setIsCopied] = useState(false);
 
     useEffect(() => {
+        // This function runs when the component first loads
+        const fetchSiteId = async () => {
+            try {
+                const response = await fetch('/api/get-site-id');
+                if (!response.ok) {
+                    throw new Error('Could not fetch Site ID.');
+                }
+                const data = await response.json();
+                setSiteId(data.siteId); // Store the fetched siteId in our state
+            } catch (error) {
+                console.error("Widget Error:", error);
+                setMainSnippet('There was an error loading your widget code. Please try refreshing the page.');
+            }
+        };
+
+        fetchSiteId();
+    }, []); // The empty array means this runs only once on mount
+
+    useEffect(() => {
+        // This second effect runs ONLY when the siteId state changes
         if (siteId) {
+            // This is your trusted, working script
             const snippet = `<script>
 (function() {
     const SITE_ID = '${siteId}';
     const API_ENDPOINT = 'https://tracker.cortexcart.com/api/track';
+    const EXP_API_ENDPOINT = 'https://tracker.cortexcart.com/api/experiments/active';
+    let abTestInfo = null;
+
     function sendEvent(eventName, data = {}) {
-        const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer }};
-        try { navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData)); } 
-        catch(e) { fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify(eventData), keepalive: true }); }
+        const eventData = { siteId: SITE_ID, eventName: eventName, data: { ...data, path: window.location.pathname, referrer: document.referrer, abTest: abTestInfo }};
+        try { navigator.sendBeacon(API_ENDPOINT, JSON.stringify(eventData)); } catch(e) { fetch(API_ENDPOINT, { method: 'POST', body: JSON.stringify(eventData), keepalive: true }); }
     }
+
     document.addEventListener('click', function(e) {
         sendEvent('click', { x: e.pageX, y: e.pageY, screenWidth: window.innerWidth });
     }, true);
-    sendEvent('pageview');
+
+    async function runAbTest() {
+        try {
+            const res = await fetch(\`\${EXP_API_ENDPOINT}?path=\${encodeURIComponent(window.location.pathname)}&siteId=\${SITE_ID}\`);
+            if (!res.ok) return;
+            const experiment = await res.json();
+            if (!experiment) return;
+        } catch (e) { console.error('CortexCart A/B Test Error:', e); }
+    }
+
+    async function initializeTracker() {
+        await runAbTest();
+        sendEvent('pageview');
+    }
+
     window.cortexcart = { track: sendEvent };
+    initializeTracker();
 })();
 <\/script>`.trim();
             setMainSnippet(snippet);
         }
-    }, [siteId]);
+    }, [siteId]); // This depends on the siteId we fetched
 
     const handleCopy = () => {
+        if (!siteId || !mainSnippet) return;
         navigator.clipboard.writeText(mainSnippet).then(() => {
             setIsCopied(true);
             setTimeout(() => setIsCopied(false), 2000);
@@ -493,10 +519,11 @@ const WidgetSettingsTabContent = ({ siteId }) => {
         <div className="max-w-3xl space-y-8">
             <h3 className="text-lg font-medium leading-6 text-gray-900">Main Tracker Script</h3>
             <p className="mt-1 text-sm text-gray-600">Place this script just before the closing `&lt;/head&gt;` tag on every page.</p>
-            <div className="p-4 bg-gray-900 rounded-md text-white font-mono text-sm overflow-x-auto relative mt-4 h-96">
+            <div className="p-4 bg-gray-900 rounded-md text-white font-mono text-sm overflow-x-auto relative mt-4" style={{ height: '350px' }}>
                 <button
                     onClick={handleCopy}
-                    className="absolute top-2 right-2 flex items-center gap-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-md text-xs"
+                    disabled={!siteId}
+                    className="absolute top-2 right-2 flex items-center gap-x-2 bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-md text-xs disabled:opacity-50"
                 >
                     {isCopied ? <CheckCircleIcon className="h-4 w-4 text-green-400"/> : <ClipboardDocumentIcon className="h-4 w-4" />}
                     {isCopied ? 'Copied!' : 'Copy Code'}
@@ -506,7 +533,6 @@ const WidgetSettingsTabContent = ({ siteId }) => {
         </div>
     );
 };
-
 // --- Billing Component ---
 const BillingTabContent = () => (
     <div className="max-w-3xl">
@@ -574,6 +600,28 @@ export default function SettingsPage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState(tabs[0].name);
 
+    // --- THIS IS THE NEW, CENTRALIZED STATE ---
+    const [connectionStatus, setConnectionStatus] = useState({});
+  
+
+    const fetchConnections = useCallback(async () => {
+        try {
+            const statusRes = await fetch('/api/social/connections/status');
+            if (!statusRes.ok) throw new Error('Could not fetch connection statuses.');
+            const statuses = await statusRes.json();
+            setConnectionStatus(statuses);
+        } catch (err) {
+            console.error("Failed to fetch platform connection data:", err);
+            setAlert({ show: true, message: err.message, type: 'danger' });
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchConnections();
+    }, [fetchConnections]);
+    // --- END OF NEW STATE LOGIC ---
+
+
     useEffect(() => {
         if (status === 'unauthenticated') { 
             router.push('/'); 
@@ -584,8 +632,8 @@ export default function SettingsPage() {
         return <Layout><div className="p-8">Loading...</div></Layout>; 
     }
     
-    if (status === 'unauthenticated') {
-        return null; // Don't render anything while redirecting
+    if (status === 'unauthenticated' || !session) {
+        return null;
     }
 
     return (
@@ -596,11 +644,22 @@ export default function SettingsPage() {
             </div>
             <SettingsTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
             <div className="mt-8 bg-white p-8 rounded-lg shadow-md">
+                {/* Now we pass the centralized state and functions down to the components */}
                 {activeTab === 'General' && <GeneralTabContent />}
                 {activeTab === 'Integrations' && <IntegrationsTabContent />}
-                {activeTab === 'Social Connections' && <SocialConnectionsTabContent />}
+                {activeTab === 'Social Connections' && 
+                    <SocialConnectionsTabContent 
+                        connectionStatus={connectionStatus} 
+                        fetchConnections={fetchConnections} 
+                    />
+                }
                 {activeTab === 'Widget Settings' && <WidgetSettingsTabContent siteId={session?.user?.site_id} />}
-                {activeTab === 'Platforms' && <PlatformsTabContent />}
+                {activeTab === 'Platforms' && 
+                    <PlatformsTabContent 
+                        connectionStatus={connectionStatus} 
+                        fetchConnections={fetchConnections} 
+                    />
+                }
                 {activeTab === 'Billing' && <BillingTabContent />}
                 {activeTab === 'Danger Zone' && <DangerZoneTabContent />}
             </div>

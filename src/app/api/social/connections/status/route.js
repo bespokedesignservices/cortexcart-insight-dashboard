@@ -10,7 +10,7 @@ export async function GET() {
     }
 
     const userEmail = session.user.email;
-    const supportedPlatforms = ['x', 'facebook', 'pinterest', 'instagram', 'youtube'];
+    const supportedPlatforms = ['x', 'facebook', 'pinterest', 'instagram', 'youtube', 'mailchimp', 'shopify'];
 
     try {
         // --- THIS IS THE FIX ---

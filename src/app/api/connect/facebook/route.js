@@ -2,13 +2,15 @@
 
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { cookies } from 'next/headers';
 
 export const runtime = 'nodejs';
 
 export async function GET(request) {
     try {
         const state = crypto.randomBytes(16).toString('hex');
-        const callbackURL = `${process.env.NEXTAUTH_URL}/connect/callback/facebook`;
+        const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const callbackURL = `${appUrl}/connect/callback/facebook`;
         
         const scopes = 'email,public_profile,pages_show_list,business_management';
 
@@ -25,15 +27,13 @@ export async function GET(request) {
         // This response will redirect the user to Facebook
         const response = NextResponse.redirect(facebookAuthUrl);
 
-        // We set a secure cookie with the state value to check against later
-         response.cookies.set('facebook_oauth_state', state, {
+         cookies().set('facebook_oauth_state', state, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             path: '/',
             sameSite: 'lax',
-            domain: '.cortexcart.com' // Set the root domain here
+            domain: process.env.NODE_ENV === 'production' ? '.cortexcart.com' : undefined,
         });
-
         return response;
 
     } catch (error) {

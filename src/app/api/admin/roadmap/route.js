@@ -66,9 +66,11 @@ export async function POST(req) {
 // --- GET: Fetch all roadmap items ---
 export async function GET() {
     try {
-        const roadmapItems = await db.roadmap.findMany({
+        // THE FIX: Use Prisma's findMany instead of db.query
+        const roadmapItems = await db.roadmap_features.findMany({
             orderBy: {
-                release_date: 'desc', // Show newest first
+                // You can create more complex sorting here if needed
+                createdAt: 'desc', 
             },
         });
         return NextResponse.json(roadmapItems, { status: 200 });
