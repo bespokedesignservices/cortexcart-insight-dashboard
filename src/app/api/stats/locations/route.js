@@ -1,5 +1,6 @@
 // src/app/api/stats/locations/route.js
-import { db } from '@/lib/db';import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { NextResponse } from 'next/server';
 import { simpleCache } from '@/lib/cache';
 
 export async function GET(request) {
@@ -13,10 +14,11 @@ export async function GET(request) {
   }
 
   const cacheKey = `locations-${siteId}-${startDate}-${endDate}`;
-  const cachedData = simpleCache.get(cacheKey);
-  if (cachedData) {
-    return NextResponse.json(cachedData, { status: 200 });
-  }
+  // For debugging, let's temporarily bypass the cache to ensure we get fresh data.
+  // const cachedData = simpleCache.get(cacheKey);
+  // if (cachedData) {
+  //   return NextResponse.json(cachedData, { status: 200 });
+  // }
 
   let dateFilter = '';
   const queryParams = [siteId];
@@ -29,28 +31,39 @@ export async function GET(request) {
   }
 
   try {
-    // --- THIS IS THE CORRECTED QUERY ---
-    // The ${dateFilter} variable is now included in the WHERE clause
+    // --- This is a simplified and more direct query ---
     const query = `
-      SELECT 
-        JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) as name,
+      SELECT
+        CASE
+          WHEN JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) = 'United Kingdom' THEN 'GBR'
+          WHEN JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) = 'GB' THEN 'GBR'
+          WHEN JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) = 'United States' THEN 'USA'
+          WHEN JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) = 'US' THEN 'USA'
+          -- Add more conversions here as needed --
+          ELSE JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country'))
+        END AS country,
         COUNT(*) as value
       FROM events
       WHERE
-        site_id = ? 
-        AND event_name = 'pageview' 
+        site_id = ?
+        AND event_name = 'pageview'
         AND JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) IS NOT NULL
         AND JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) != ''
+        AND JSON_UNQUOTE(JSON_EXTRACT(event_data, '$.country')) != 'null'
         ${dateFilter}
-      GROUP BY 
-        name
-      HAVING
-        name IS NOT NULL
-      ORDER BY 
+      GROUP BY
+        country
+      ORDER BY
         value DESC;
     `;
     
     const [results] = await db.query(query, queryParams);
+    
+    // --- THIS IS THE CRITICAL DEBUGGING STEP ---
+    // This will print the database results to your server's PM2 log.
+    console.log("Database results for locations:", results);
+    // -----------------------------------------
+
     simpleCache.set(cacheKey, results, 600);
     return NextResponse.json(results, { status: 200 });
 

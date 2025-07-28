@@ -17,7 +17,7 @@ import TopReferrersList from '@/app/components/TopReferrersList';
 import DeviceChart from '@/app/components/DeviceChart';
 import LiveVisitorCount from '@/app/components/LiveVisitorCount';
 import SkeletonCard from '@/app/components/SkeletonCard';
-import CountryViewsList from '@/app/components/CountryViewsList';
+import CountryMapChart from '@/app/components/CountryMapChart';
 import Ga4LineChart from '@/app/components/Ga4LineChart';
 import PerformanceScore from '@/app/components/PerformanceScore';
 
@@ -102,7 +102,8 @@ export default function DashboardPage() {
           }
           
           const [statsData, chartData, eventsData, topPagesData, topReferrersData, locationsData, settingsData, deviceTypesData] = await Promise.all(responses.map(res => res.json()));
-          
+                  console.log("Data received for locations:", locationsData);
+
           setStats(statsData);
           setChartApiData(chartData);
           setRecentEvents(eventsData);
@@ -180,7 +181,7 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <div className="space-y-4 mb-6">
+      <div className="space-y-4 mb-6 bg-grey-200">
         {alerts.map((alert) => (
             <AlertBanner key={alert.id} title={alert.title} message={alert.message} type={alert.type} />
         ))}
@@ -213,8 +214,8 @@ export default function DashboardPage() {
                 <SalesBarChart apiData={chartApiData} currencySymbol={currencySymbol} />
               </ChartContainer>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <ChartContainer title="Visitors by Country">
-                  <CountryViewsList locationData={locationData} />
+                <ChartContainer title="Visitors by Country" className="h-full">
+                  <CountryMapChart data={locationData} />
                 </ChartContainer>
                 <ChartContainer title="Recent Events">
                   <RecentEventsTable events={recentEvents} />

@@ -329,7 +329,7 @@ const ComposerTabContent = ({ scheduledPosts, onPostScheduled, postContent, setP
         <>
          
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                    <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md border border-gray-200">
                         <div className="flex items-center border-b pb-4 overflow-x-auto whitespace-nowrap">
                             {Object.values(PLATFORMS).map(platform => {
                                 const Icon = platform.icon;
@@ -529,7 +529,7 @@ const ComposerTabContent = ({ scheduledPosts, onPostScheduled, postContent, setP
                         </form>
                     </div>
                     <div className="lg:col-span-1 space-y-8">
-                        <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+                        <div className="bg-white p-6 rounded-lg shadow-md space-y-4 border border-gray-200">
                             <h3 className="font-semibold text-lg">AI Assistant</h3>
                             <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g., 'New Summer T-Shirt Sale'" className="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm"/>
                      <button onClick={handleGeneratePost} disabled={isGenerating || !topic.trim()} className="w-full flex items-center justify-center px-4 py-2 border rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400">
@@ -539,7 +539,7 @@ const ComposerTabContent = ({ scheduledPosts, onPostScheduled, postContent, setP
                     {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
                          </div>
-                        <div className="bg-white p-6 rounded-lg shadow-md">
+                        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                             <h3 className="font-semibold text-lg mb-4">Upcoming Posts</h3>
                             <div className="space-y-3 max-h-96 overflow-y-auto">
                         {scheduledPosts.length > 0 ? scheduledPosts.slice(0, 5).map(post => {
@@ -663,7 +663,7 @@ const AnalyticsTabContent = () => {
     return ( 
         <div className="space-y-8">
             {/* Card 1: Overview and Sync Buttons */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center">
                     <h3 className="text-2xl font-bold text-gray-800 mb-4">Analytics Overview</h3>
                     </div>
@@ -698,7 +698,7 @@ const AnalyticsTabContent = () => {
             </div>
 
             {/* Card 2: Key Metrics */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Key Metrics</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
@@ -717,7 +717,7 @@ const AnalyticsTabContent = () => {
             </div>
 
             {/* --- THE FIX: Uncommented the chart components --- */}
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h4 className="text-xl font-semibold text-gray-800 mb-4">Daily Reach (Last 30 Days)</h4>
                 <div className="h-80"><Ga4LineChart data={reachChartData} /></div>
             </div>
@@ -728,7 +728,7 @@ const AnalyticsTabContent = () => {
                          <PlatformPostsChart chartData={postsByPlatformData} />
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                     <h4 className="text-xl font-semibold text-gray-800 mb-4">Engagement Rate by Platform</h4>
                     <div className="h-80 flex justify-center"><EngagementByPlatformChart data={engagementByPlatformData} /></div>
                 </div>
@@ -825,7 +825,7 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, calendarDate, s
 
     return (
  <>
-        <div className="bg-white p-6 rounded-lg shadow-md mb-4">
+        <div className="bg-white p-6 rounded-lg shadow-md mb-4 border border-gray-200">
             <h3 className="text-2xl font-bold text-gray-800 mb-4">Schedule Posts</h3>
             <p className="mt-1 text-sm text-gray-500">
                 Plan and organize your social media content calendar. Drag and drop posts to easily reschedule them.
@@ -850,7 +850,7 @@ const ScheduleTabContent = ({ scheduledPosts, setScheduledPosts, calendarDate, s
                     </div>
                 </div>
             </div>
-        <div className="bg-white p-6 rounded-lg shadow-md" style={{ height: '80vh' }}>
+        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200" style={{ height: '80vh' }}>
             <DragAndDropCalendar
                 localizer={localizer}
                 events={scheduledPosts}
@@ -918,7 +918,7 @@ const DemographicsTabContent = () => {
 
     return (
         <div className="space-y-8">
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h3 className="text-2xl font-bold text-gray-800 mb-6">Demographics Insights</h3>
                 <p className="text-gray-600 mb-6">
                     Select demographic filters to gain insights into your audience. This feature allows you to tailor your content and campaigns more effectively.
@@ -926,7 +926,7 @@ const DemographicsTabContent = () => {
             </div>
 
             {currentDemographics && (
-                <div className="bg-white p-6 rounded-lg shadow-md">
+                <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                     <h3 className="text-xl font-bold text-gray-800 mb-4">Current Demographic Settings</h3> {/* Changed from h4 to h3 */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4"> {/* Added grid layout */}
                         {/* Age Range Card */}
@@ -957,7 +957,7 @@ const DemographicsTabContent = () => {
                 </div>
             )}
 
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">Apply New Filters</h3>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

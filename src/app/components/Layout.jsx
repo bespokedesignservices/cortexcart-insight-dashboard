@@ -162,7 +162,7 @@ const Footer = () => {
   ];
 
     return (
-        <footer className="bg-white border-t border-gray-200">
+        <footer className="bg-white mt-4 w-full p-0">
             <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                 <nav className="flex flex-wrap justify-center -mx-5 -my-2">
                     {footerLinks.map((link) => (
@@ -194,11 +194,9 @@ const SidebarContent = () => {
   const [isAiMenuOpen, setIsAiMenuOpen] = useState(false); // State for the new dropdown, default to open
 
   const getLinkClass = (path) => {
-    if (path === '/dashboard') {
-        return pathname === path ? 'flex items-center p-2 bg-gray-700 rounded-lg text-white' : 'flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors';
-    }
-    return pathname.startsWith(path) ? 'flex items-center p-2 bg-gray-700 rounded-lg text-white' : 'flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors';
-  };
+    // All other links should be text-grey-900
+    return pathname.startsWith(path) ? 'flex items-center p-2 bg-gray-700 rounded-lg text-gray-100' : 'flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-600 hover:text-white transition-colors';
+  }; 
 
   // Sub-link style for the dropdown items
   const getSubLinkClass = (path) => {
@@ -208,16 +206,16 @@ const SidebarContent = () => {
   return (
     <>
       <div className="flex-grow">
-        <a href="/" className="flex items-center pb-6 px-2"><h1 className="text-2xl font-bold text-white">CortexCart</h1></a>
+        <a href="/" className="flex items-center pb-6 px-2"><h1 className="text-2xl font-bold text-grey-900">CortexCart</h1></a>
         <nav>
           <ul className="space-y-2">
             {session && (
-            <>
+            <> 
                 <li><a href="/dashboard" className={getLinkClass('/dashboard')}><ChartPieIcon className="h-6 w-6 mr-3" /><span>Dashboard</span></a></li>
                 
                 {/* --- New AI Tools Dropdown --- */}
                 <li>
-                    <button onClick={() => setIsAiMenuOpen(!isAiMenuOpen)} className="flex items-center justify-between w-full p-2 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
+                    <button onClick={() => setIsAiMenuOpen(!isAiMenuOpen)} className="flex items-center justify-between w-full p-2 text-gray-900 rounded-lg hover:bg-gray-600 hover:text-white transition-colors dark:text-gray-300">
                         <div className="flex items-center">
                             <SparklesIcon className="h-6 w-6 mr-3" />
                             <span>AI Tools</span>
@@ -361,17 +359,17 @@ const FeedbackButton = () => {
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   return (
-    <div className="relative h-screen flex bg-gray-100 overflow-hidden">
+    <div className="relative h-screen flex bg-grey-400 overflow-hidden">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex lg:flex-shrink-0 w-64 bg-gray-800 p-4 flex-col">
+      <aside className="hidden lg:flex lg:flex-shrink-0 w-64 bg-white p-4 flex-col border-r border-gray-200">
         <SidebarContent />
       </aside>
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col w-0">
         {/* Corrected Header Structure */}
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow ${isScrolled ? 'bg-white' : 'bg-transparent'}">
-            <button onClick={() => setSidebarOpen(true)} className="px-4 border-r border-gray-200 text-gray-500 focus:outline-none lg:hidden">
+        <div className="relative z-10 flex-shrink-0 flex h-16 bg-grey-700 shadow ${isScrolled ? 'bg-grey-700' : 'bg-transparent'}">
+            <button onClick={() => setSidebarOpen(true)} className="px-4 border-r border-gray-900 text-gray-500 focus:outline-none lg:hidden">
                 <span className="sr-only">Open sidebar</span>
                 <Bars3Icon className="h-6 w-6" />
             </button>
@@ -380,18 +378,19 @@ const Layout = ({ children }) => {
             </div>
         </div>
 
-        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none p-6 lg:p-10">
+        <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none p-6 lg:p-10 bg-grey-400">
             <BetaBanner />
             {children}
+                <Footer />
         </main>
         
-        <Footer />
+    
       </div>
 
       {/* Mobile Sidebar Flyout */}
       <div className={`fixed inset-0 z-40 lg:hidden ${sidebarOpen ? '' : 'pointer-events-none'}`}>
         <div className={`fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`} onClick={() => setSidebarOpen(false)}></div>
-        <div className={`relative max-w-xs w-full bg-gray-800 h-full flex flex-col p-4 transition-transform transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`relative max-w-xs w-full bg-white h-full flex flex-col p-4 transition-transform transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
             <button onClick={() => setSidebarOpen(false)} className="absolute top-2 right-2 text-gray-400"><XMarkIcon className="h-6 w-6"/></button>
             <SidebarContent />
         </div>

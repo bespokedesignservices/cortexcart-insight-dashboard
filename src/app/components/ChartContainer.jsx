@@ -10,7 +10,7 @@ import React from 'react';
  */
 const ChartContainer = ({ title, description, children }) => {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white p-6 rounded-lg shadow-md  border border-gray-200">
       
       <h3 className="text-xl font-semibold text-gray-700">
         {title}

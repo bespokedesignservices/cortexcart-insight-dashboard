@@ -38,6 +38,8 @@
     "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
+    "react-simple-maps": "^1.0.0",
+    "react-tooltip": "^5.29.1",
     "stripe": "^18.2.1",
     "twitter-api-v2": "^1.24.0",
     "ua-parser-js": "^2.0.3"

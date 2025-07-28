@@ -132,7 +132,7 @@ export default function ImageManager({ onImageAdd }) {
     };
 
 return (
-        <div className="p-6 bg-white shadow-md rounded-lg mt-8">
+        <div className="p-6 bg-white shadow-md rounded-lg mt-8 border border-gray-200">
             <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Image Manager</h3>
             <div className="space-y-4 mb-4">
                 <form onSubmit={handleAddImage} className="flex items-center gap-2">
