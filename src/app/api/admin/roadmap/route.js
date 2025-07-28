@@ -79,7 +79,7 @@ export async function GET() {
 
         // Fetch all roadmap items, ordered by creation date descending
         const [roadmapItems] = await connection.execute(
-            'SELECT * FROM roadmap_features ORDER BY created_at DESC'
+            'SELECT * FROM roadmap_features ORDER BY createdAt DESC'
         );
 
         return NextResponse.json(roadmapItems, { status: 200 });
