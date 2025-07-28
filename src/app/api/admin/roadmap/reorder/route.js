@@ -1,12 +1,12 @@
 // src/app/api/admin/roadmap/reorder/route.js
 import { verifyAdminSession } from '@/lib/admin-auth';
 import { db } from '@/lib/db';import { NextResponse } from 'next/server';
-
+import { NextResponse } from 'next/server';
 // PATCH handler to update the order and status of multiple features
 export async function PATCH(request) {
-  const adminSession = await verifyAdminSession();
+     const adminSession = await verifyAdminSession();
     if (!adminSession) {
-        return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+        return new NextResponse("Forbidden", { status: 403 });
     }
 
     const connection = await db.getConnection();
