@@ -1,8 +1,8 @@
 // src/app/api/admin/roadmap/route.js (Corrected)
 
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { jwtVerify } from 'jose'; // FIX: Import jwtVerify for custom token validation
+import { db } from '@/lib/db'; // Assuming db is a mysql2 connection pool
+import { jwtVerify } from 'jose';
 
 // Helper function to get the secret key
 const getSecret = () => {
@@ -15,9 +15,11 @@ const getSecret = () => {
 
 // --- POST: Add a new roadmap item ---
 export async function POST(req) {
+    let connection;
     try {
-        // FIX: Replaced next-auth getToken with custom admin token verification
-        const adminCookie = req.cookies.get('admin-session-token');
+        // Replaced next-auth getToken with custom admin token verification
+        // FIX: Await cookies() before using its value
+        const adminCookie = (await req.cookies).get('admin-session-token');
         const token = adminCookie?.value;
 
         if (!token) {
@@ -40,21 +42,28 @@ export async function POST(req) {
             return new NextResponse("Missing required fields", { status: 400 });
         }
 
-        const newRoadmapItem = await db.roadmap.create({
-            data: {
-                title,
-                description,
-                category,
-                status,
-                release_date: releaseDate ? new Date(releaseDate) : null,
-            },
-        });
+        connection = await db.getConnection();
+
+        const query = `
+            INSERT INTO roadmap_features (title, description, category, status, release_date)
+            VALUES (?, ?, ?, ?, ?)
+        `;
+        const values = [
+            title,
+            description,
+            category,
+            status,
+            releaseDate ? new Date(releaseDate) : null,
+        ];
+
+        const [result] = await connection.execute(query, values);
+        const newRoadmapItem = { id: result.insertId, title, description, category, status, releaseDate };
 
         return NextResponse.json(newRoadmapItem, { status: 201 });
 
     } catch (error) {
         console.error('[ROADMAP_POST_ERROR]', error);
-        // If the token is invalid, jwtVerify will throw an error
+        // If the token is invalid or expired, jwtVerify will throw an error
         if (error.code === 'ERR_JWT_EXPIRED' || error.code === 'ERR_JWS_INVALID') {
             return new NextResponse("Unauthorized: Invalid session token.", { status: 401 });
         }
@@ -62,20 +71,24 @@ export async function POST(req) {
     }
 }
 
-
 // --- GET: Fetch all roadmap items ---
 export async function GET() {
+    let connection;
     try {
-        // THE FIX: Use Prisma's findMany instead of db.query
-        const roadmapItems = await db.roadmap_features.findMany({
-            orderBy: {
-                // You can create more complex sorting here if needed
-                createdAt: 'desc', 
-            },
-        });
+        connection = await db.getConnection();
+
+        // Fetch all roadmap items, ordered by creation date descending
+        const [roadmapItems] = await connection.execute(
+            'SELECT * FROM roadmap_features ORDER BY created_at DESC'
+        );
+
         return NextResponse.json(roadmapItems, { status: 200 });
     } catch (error) {
         console.error('[ROADMAP_GET_ERROR]', error);
         return new NextResponse("Internal Server Error", { status: 500 });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 }

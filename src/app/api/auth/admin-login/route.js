@@ -15,6 +15,7 @@ const getAdminSecret = () => {
 };
 
 export async function POST(req) {
+    let connection;
     try {
         const { email, password } = await req.json();
 
@@ -22,20 +23,24 @@ export async function POST(req) {
             return new NextResponse("Email and password are required", { status: 400 });
         }
 
-        const admin = await db.admins.findUnique({
-            where: { email: email },
-        });
+        connection = await db.getConnection();
+
+        // 1. Find the admin user by email
+        const [rows] = await connection.query('SELECT * FROM admins WHERE email = ?', [email]);
+        const admin = rows[0];
 
         if (!admin) {
             return new NextResponse("Invalid credentials", { status: 401 });
         }
 
+        // 2. Securely compare the provided password with the hashed password from the database
         const isPasswordValid = await bcrypt.compare(password, admin.password);
 
         if (!isPasswordValid) {
             return new NextResponse("Invalid credentials", { status: 401 });
         }
 
+        // 3. If the password is valid, create a session token
         const secret = getAdminSecret();
         const token = await new SignJWT({
             userId: admin.id,
@@ -46,25 +51,25 @@ export async function POST(req) {
         .setIssuedAt()
         .setExpirationTime('1h')
         .sign(secret);
-
-        // --- THE FIX: Set the cookie on the NextResponse object ---
-        const response = NextResponse.json(
-            { message: "Login successful" },
-            { status: 200 }
-        );
+        
+        const response = NextResponse.json({ message: "Login successful" }, { status: 200 });
 
         response.cookies.set('admin-session-token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60, // 1 hour in seconds
+            maxAge: 60 * 60,
         });
 
-        return response; // Return the response with the cookie attached
+        return response;
 
     } catch (error) {
         console.error('[ADMIN_LOGIN_ERROR]', error);
         return new NextResponse("Internal Server Error", { status: 500 });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 }

@@ -45,3 +45,6 @@ analytics-dashboard-464606-6c0947d73aab.json
 # Backup files to be excluded from updates
 *.bak
 .env
+
+# Ignore update scripts
+admin-password-reset.js

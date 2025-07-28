@@ -12,12 +12,11 @@ import "./globals.css";
 //                             Cortexcart Version 0.9.3 Beta Release 3 - www.cortexcart.com                              #
 // #######################################################################################################################
 import React from 'react';
-import Image from 'next/image';
 import { 
     ShieldCheckIcon, ChartBarIcon, SparklesIcon, ArrowRightIcon,    PuzzlePieceIcon, TableCellsIcon, BeakerIcon 
 } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 import { ElementType } from 'react';
-
 // --- Interfaces for Type Safety ---
 interface CmsContent {
     hero_title?: string;
@@ -239,6 +238,49 @@ export default function HomePageClient({ content, plans, recentPost }: HomePageC
                         {plans.map(plan => <PricingCard key={plan.name} plan={plan} />)}
                     </div>
                 </div>
+            </section>
+
+            {/* Scrolling Logo Banner Section */}
+            <section className="py-12 bg-gray-100 overflow-hidden">
+                <div className="container mx-auto px-6">
+                    <h2 className="text-center text-2xl font-bold text-gray-800 mb-8">Integrates with Your Favorite Platforms</h2>
+                </div>
+                <div className="flex animate-scroll-left whitespace-nowrap py-4">
+                    {/* Duplicate content to ensure seamless loop */}
+                    {[...Array(2)].map((_, i) => (
+                        <div key={i} className="flex items-center justify-around flex-shrink-0 w-full md:w-auto px-8 space-x-12">
+                 <Image src={"/logos/mailchimplogo.png"} width={100} height={100} alt={'Mailchimp Logo'}></Image>                    
+                <Image src={"/logos/quickbooklogo.png"} width={100} height={100} alt={'Quickbooks Logo'}></Image>                    
+                <Image src={"/logos/shopifylogo.png"} width={100} height={100} alt={'Shopify Logo'}></Image>                    
+                <Image src={"/logos/facebooklogo.png"} width={100} height={100} alt={'Facebook Logo'}></Image>                    
+                <Image src={"/logos/instagramlogo.png"} width={100} height={100} alt={'Instagram Logo'}></Image>                    
+                <Image src={"/logos/xlogo.png"} width={100} height={100} alt={'X Logo'}></Image>                    
+                <Image src={"/logos/pintrestlogo.png"} width={100} height={100} alt={'Pinterest Logo'}></Image>                    
+               <Image src={"/logos/bigcommercelogo.png"} width={100} height={100} alt={'Pinterest Logo'}></Image>                    
+               <Image src={"/logos/magentologo.png"} width={100} height={100} alt={'Pinterest Logo'}></Image>                    
+               <Image src={"/logos/opencartlogo.png"} width={100} height={100} alt={'Pinterest Logo'}></Image>                    
+
+                                            </div>
+                    ))}
+                </div>
+                <style jsx>{`
+                    @keyframes scroll-left {
+                        0% {
+                            transform: translateX(0%);
+                        }
+                        100% {
+                            transform: translateX(-50%); /* Scrolls half the width of the duplicated content */
+                        }
+                    }
+                    .animate-scroll-left {
+                        animation: scroll-left 30s linear infinite;
+                        display: flex;
+                        width: 200%; /* Double the width to accommodate duplicated content */
+                    }
+                    .animate-scroll-left:hover {
+                        animation-play-state: paused;
+                    }
+                `}</style>
             </section>
 
             <footer className="bg-gray-800 text-white py-8">
