@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, memo, useEffect } from 'react';
+import React, { useState, memo } from 'react';
 import { ComposableMap, Geographies, Geography, Sphere, Graticule } from 'react-simple-maps';
 import { scaleLinear } from 'd3-scale';
 import { Tooltip } from 'react-tooltip';
