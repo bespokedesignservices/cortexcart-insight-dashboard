@@ -5,7 +5,7 @@ import React from 'react';
 const SettingsTabs = ({ tabs, activeTab, setActiveTab }) => {
   return (
     <div>
-      <nav className="flex space-x-2" aria-label="Tabs">
+      <nav className="flex space-x-2 " aria-label="Tabs">
         {tabs.map((tab) => (
           <button
             key={tab.name}

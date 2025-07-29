@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { BellIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon } from '@heroicons/react/24/outline';
 import NotificationsPanel from './NotificationsPanel';
-import ThemeToggle from './ThemeToggle';
 export default function TopNav() {
     const { data: session, status } = useSession();
     const [userDropdownOpen, setUserDropdownOpen] = useState(false);

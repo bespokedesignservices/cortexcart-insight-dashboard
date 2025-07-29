@@ -227,7 +227,7 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => 
                 <h3 className="text-lg font-medium leading-6 text-gray-900">Social Connections</h3>
                 <p className="mt-1 text-sm text-gray-500">Connect your social media accounts to enable posting and analytics.</p>
                 
-                <div className="mt-6 p-4 border rounded-lg">
+                <div className="mt-6 p-4 border border-gray-200 rounded-lg">
                     <div className="flex items-center justify-between">
                          <div>
                             <p className="font-semibold">Facebook / Instagram</p>
@@ -294,7 +294,7 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => 
                     )}
                 </div>
 
-                <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
+                <div className="mt-4 p-4 border border-gray-200 rounded-lg flex items-center justify-between">
                     <div>
                         <p className="font-semibold">X (Twitter)</p>
                         <p className="text-sm text-gray-500">Connect your X account to allow posting and scheduling.</p>
@@ -309,7 +309,7 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => 
                       )}
                 </div>
 
-                <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
+                <div className="mt-4 p-4 border border-gray-200 rounded-lg flex items-center justify-between">
                     <div>
                         <p className="font-semibold">YouTube</p>
                         <p className="text-sm text-gray-500">Connect your YouTube channel to sync videos and analytics.</p>
@@ -324,7 +324,7 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => 
                     )}
                 </div>
 
-                <div className="mt-4 p-4 border rounded-lg flex items-center justify-between">
+                <div className="mt-4 p-4 border border-gray-200 rounded-lg flex items-center justify-between">
                     <div>
                         <p className="font-semibold">Pinterest</p>
                         <p className="text-sm text-gray-500">Connect your Pinterest account to pin content and view analytics.</p>
@@ -374,7 +374,7 @@ const PlatformsTabContent = ({ connectionStatus, fetchConnections }) => {
             <h3 className="text-lg font-medium leading-6 text-gray-900">Platform Integrations</h3>
             <p className="mt-1 text-sm text-gray-500">Connect your e-commerce and other platforms.</p>
 
-            <div className="mt-4 p-4 border rounded-lg">
+            <div className="mt-4 p-4 border border-gray-200 rounded-lg">
                 <p className="font-semibold">Shopify</p>
                 <p className="text-sm text-gray-500">Connect your Shopify store to link social media performance to sales.</p>
                 {connectionStatus.shopify ? (
@@ -406,7 +406,7 @@ const PlatformsTabContent = ({ connectionStatus, fetchConnections }) => {
                 )}
             </div>
  {/* --- THIS IS THE NEW MAILCHIMP Connection --- */}
-             <div className="mt-4 p-4 border rounded-lg">
+             <div className="mt-4 p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="font-semibold">Mailchimp</p>
@@ -582,7 +582,7 @@ const DangerZoneTabContent = () => {
                 <h3 className="text-lg font-medium leading-6 text-red-700">Danger Zone</h3>
                 <div className="mt-4 p-4 border border-red-300 bg-red-50 rounded-lg flex items-center justify-between">
                     <div>
-                        <h4 className="font-semibold text-red-800">Delete Your Account</h4>
+                        <h4 className="font-semibold text-red-800">Delete Account</h4>
                         <p className="mt-1 text-sm text-red-700">Permanently remove your account and all associated data.</p>
                     </div>
                     <button onClick={() => setIsDeleteModalOpen(true)} className="ml-4 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700">
@@ -643,7 +643,7 @@ export default function SettingsPage() {
                 <p className="mt-1 text-sm text-gray-500">Manage your site settings, integrations, and tracking.</p>
             </div>
             <SettingsTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
-            <div className="mt-8 bg-white p-8 rounded-lg shadow-md">
+            <div className="mt-8 bg-white p-8 rounded-lg">
                 {/* Now we pass the centralized state and functions down to the components */}
                 {activeTab === 'General' && <GeneralTabContent />}
                 {activeTab === 'Integrations' && <IntegrationsTabContent />}

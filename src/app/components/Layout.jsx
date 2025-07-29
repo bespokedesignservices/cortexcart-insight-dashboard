@@ -5,7 +5,6 @@ import { useSession, signIn, signOut } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import RealTimeClock from './RealTimeClock';
-import ThemeToggle from './ThemeToggle';
 import { DocumentChartBarIcon } from '@heroicons/react/24/outline';
 import { 
     ChartPieIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon, LightBulbIcon,
@@ -69,7 +68,7 @@ const TopNav = () => {
 
     return (
         <div className="flex items-center space-x-4 h-full">
-           <ThemeToggle className="text-gray-900" />
+          
 <RealTimeClock />
             <div className="relative h-full flex items-center" ref={notificationsRef}>
                 <button onClick={() => setNotificationsOpen(!notificationsOpen)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 relative">
@@ -251,9 +250,9 @@ const SidebarContent = () => {
         {status === 'authenticated' && (
           <div className="mb-4 text-sm"><p className="font-semibold text-white">{session.user.name}</p><p className="text-gray-400 truncate">{session.user.email}</p></div>
         )}
-        <button onClick={() => session ? signOut({ callbackUrl: '/' }) : signIn('google')} className="w-full flex items-center justify-center p-2 bg-gray-700 rounded-lg text-white hover:bg-gray-600 transition-colors">
+        <Link href={session ? '#' : '/api/auth/signin'} onClick={() => session && signOut({ callbackUrl: '/' })} className="w-full flex">
           <ArrowRightEndOnRectangleIcon className="h-6 w-6 mr-3" /><span>{session ? 'Sign Out' : 'Sign In'}</span>
-        </button>
+        </Link>
       </div>
     </>
   );
