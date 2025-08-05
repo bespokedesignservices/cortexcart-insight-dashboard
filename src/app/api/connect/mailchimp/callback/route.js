@@ -1,10 +1,10 @@
-// src/app/api/connect/mailchip/callback/route.js (Complete and Corrected)
-
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { encrypt } from '@/lib/crypto';
 import axios from 'axios';
 import { jwtVerify } from 'jose';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 const getStateSecret = () => {
     const secret = process.env.NEXTAUTH_SECRET;
@@ -15,28 +15,49 @@ const getStateSecret = () => {
 };
 
 export async function GET(req) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const redirectUrl = new URL('/settings', appUrl);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://127.0.0.1:3000';
+    const redirectUrl = new URL('/settings?tab=Platforms', appUrl);
     
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     const stateToken = searchParams.get('state');
 
-    if (!code || !stateToken) {
+    if (!code) {
         redirectUrl.searchParams.set('connect_status', 'error');
-        redirectUrl.searchParams.set('message', 'invalid_callback');
+        redirectUrl.searchParams.set('message', 'invalid_callback_code');
         return NextResponse.redirect(redirectUrl);
     }
+    
+    let userEmail, userId;
 
-    let connection;
     try {
-        const { payload } = await jwtVerify(stateToken, getStateSecret());
-        const userId = payload.userId;
-        const userEmail = payload.userEmail;
+        // --- THIS IS THE NEW HYBRID LOGIC ---
+        // 1. First, try the standard session method (will work in production)
+        const session = await getServerSession(authOptions);
 
-        if (!userId || !userEmail) {
-            throw new Error("Invalid state token payload.");
+        if (session && session.user) {
+            userEmail = session.user.email;
+            userId = session.user.id;
+        } 
+        // 2. If session fails, fall back to the JWT state token (will work in development)
+        else if (stateToken) {
+            try {
+                const { payload } = await jwtVerify(stateToken, getStateSecret());
+                userEmail = payload.userEmail;
+                userId = payload.userId;
+            } catch (jwtError) {
+                // If the state token is invalid, we must stop.
+                throw new Error("Invalid or expired state token.");
+            }
         }
+
+        // 3. If neither method worked, we are not authenticated.
+        if (!userEmail) {
+            redirectUrl.searchParams.set('connect_status', 'error');
+            redirectUrl.searchParams.set('message', 'authentication_required');
+            return NextResponse.redirect(redirectUrl);
+        }
+        // --- END OF HYBRID LOGIC ---
 
         const params = new URLSearchParams();
         params.append('grant_type', 'authorization_code');
@@ -45,30 +66,22 @@ export async function GET(req) {
         params.append('redirect_uri', `${appUrl}/api/connect/mailchimp/callback`);
         params.append('code', code);
 
-        const tokenResponse = await axios.post(
-            'https://login.mailchimp.com/oauth2/token',
-            params,
-            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-        );
-        
+        const tokenResponse = await axios.post('https://login.mailchimp.com/oauth2/token', params);
         const { access_token } = tokenResponse.data;
 
-        // --- THIS IS THE CORRECTED, COMPLETE LINE ---
         const metadataResponse = await axios.get('https://login.mailchimp.com/oauth2/metadata', {
             headers: { 'Authorization': `OAuth ${access_token}` },
         });
         const { dc } = metadataResponse.data;
-        // --- END OF FIX ---
 
-        connection = await db.getConnection();
         const query = `
-            INSERT INTO social_connections (user_email, platform, access_token_encrypted, server_prefix)
+            INSERT INTO social_connect (user_email, platform, access_token_encrypted, server_prefix)
             VALUES (?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
             access_token_encrypted = VALUES(access_token_encrypted),
             server_prefix = VALUES(server_prefix);
         `;
-        await connection.query(query, [ userEmail, 'mailchimp', encrypt(access_token), dc ]);
+        await db.query(query, [ userEmail, 'mailchimp', encrypt(access_token), dc ]);
 
         redirectUrl.searchParams.set('connect_status', 'success');
         return NextResponse.redirect(redirectUrl);
@@ -78,9 +91,5 @@ export async function GET(req) {
         redirectUrl.searchParams.set('connect_status', 'error');
         redirectUrl.searchParams.set('message', 'connection_failed');
         return NextResponse.redirect(redirectUrl);
-    } finally {
-        if (connection) {
-            connection.release();
-        }
     }
 }

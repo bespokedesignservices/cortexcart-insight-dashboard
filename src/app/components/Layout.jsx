@@ -194,12 +194,12 @@ const SidebarContent = () => {
 
   const getLinkClass = (path) => {
     // All other links should be text-grey-900
-    return pathname.startsWith(path) ? 'flex items-center p-2 bg-gray-700 rounded-lg text-gray-100' : 'flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-600 hover:text-white transition-colors';
+    return pathname.startsWith(path) ? 'flex items-center p-2 bg-gray-700 rounded-lg text-gray-100' : 'flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-900 hover:text-white transition-colors';
   }; 
 
   // Sub-link style for the dropdown items
   const getSubLinkClass = (path) => {
-    return pathname.startsWith(path) ? 'text-white font-semibold' : 'text-gray-400 hover:text-white';
+    return pathname.startsWith(path) ? 'text-white font-semibold' : 'text-gray-400 hover:text-gray-300';
   };
 
   return (

@@ -146,9 +146,8 @@ const IntegrationsTabContent = () => {
     );
 };
 
-const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => {
-    const searchParams = useSearchParams(); // FIX: Use the hook here
-    const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
+const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections, setAlert }) => {
+    const searchParams = useSearchParams();
     const [activePageId, setActivePageId] = useState(null); 
     const [facebookPages, setFacebookPages] = useState([]);
     const [instagramAccounts, setInstagramAccounts] = useState([]);
@@ -176,7 +175,7 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => 
                 setInstagramAccounts([]);
             }
         };
-         fetchPageData();
+        fetchPageData();
     const connectStatus = searchParams.get('connect_status');
         if (connectStatus) {
             const message = connectStatus === 'success' 
@@ -184,7 +183,7 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => 
                 : searchParams.get('message')?.replace(/_/g, ' ') || 'An unknown error occurred.';
             setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
         }
-    }, [connectionStatus, searchParams]); // This now correctly depends on the prop
+    }, [connectionStatus, setAlert]); // This now correctly depends on the prop
 
     const handleDisconnect = async (platform) => {
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
@@ -222,7 +221,6 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => 
 
     return (
         <div className="max-w-3xl space-y-4">
-            {alert.show && <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} />}
             <div>
                 <h3 className="text-lg font-medium leading-6 text-gray-900">Social Connections</h3>
                 <p className="mt-1 text-sm text-gray-500">Connect your social media accounts to enable posting and analytics.</p>
@@ -344,13 +342,10 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections }) => 
 };
 
 // --- New Platforms Component ---
-const PlatformsTabContent = ({ connectionStatus, fetchConnections }) => {
-    // It also receives connectionStatus and fetchConnections as props
-    const [shopifyStore, setShopifyStore] = useState(''); // FIX: Added setShopifyStore to fix the error
-    const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
+const PlatformsTabContent = ({ connectionStatus, fetchConnections, setAlert }) => {
+    const [shopifyStore, setShopifyStore] = useState('');
 
     const handleDisconnect = async (platform) => {
-        // This function now uses the fetchConnections prop from the parent
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
         try {
             const res = await fetch('/api/social/connections/status', {
@@ -359,19 +354,19 @@ const PlatformsTabContent = ({ connectionStatus, fetchConnections }) => {
                 body: JSON.stringify({ platform }),
             });
             if (!res.ok) throw new Error((await res.json()).message || `Could not disconnect ${platform}.`);
-            await fetchConnections(); // Call the function from props
+            await fetchConnections(); 
+            // This call to setAlert will now work correctly
             setAlert({ show: true, message: `${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnected successfully!`, type: 'success' });
         } catch (err) {
             console.error(`Could not disconnect ${platform}:`, err);
+            // This call to setAlert will also work correctly
             setAlert({ show: true, message: err.message, type: 'danger' });
         }
-    };
-    
-    // The JSX for this component remains the same
+    };    
+   
     return (
        <div className="max-w-3xl space-y-4">
-            {alert.show && <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} />}
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Platform Integrations</h3>
+             <h3 className="text-lg font-medium leading-6 text-gray-900">Platform Integrations</h3>
             <p className="mt-1 text-sm text-gray-500">Connect your e-commerce and other platforms.</p>
 
             <div className="mt-4 p-4 border border-gray-200 rounded-lg">
@@ -599,6 +594,9 @@ export default function SettingsPage() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState(tabs[0].name);
+    const searchParams = useSearchParams();
+    const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
+
 
     // --- THIS IS THE NEW, CENTRALIZED STATE ---
     const [connectionStatus, setConnectionStatus] = useState({});
@@ -619,7 +617,23 @@ export default function SettingsPage() {
     useEffect(() => {
         fetchConnections();
     }, [fetchConnections]);
-    // --- END OF NEW STATE LOGIC ---
+
+    // New useEffect to handle redirect from oauth
+    useEffect(() => {
+        const connectStatus = searchParams.get('connect_status');
+        if (connectStatus) {
+            // If the URL has a status, show a message
+            const message = connectStatus === 'success' 
+                ? 'Account connected successfully!' 
+                : searchParams.get('message')?.replace(/_/g, ' ') || 'An unknown error occurred.';
+            setAlert({ show: true, message, type: connectStatus === 'success' ? 'success' : 'danger' });
+
+            // CRUCIAL: Re-fetch the connection statuses to update the UI
+            fetchConnections();
+        }
+
+    }, [searchParams, fetchConnections]);
+
 
 
     useEffect(() => {
@@ -641,8 +655,12 @@ export default function SettingsPage() {
             <div className="mb-8">
                 <h2 className="text-3xl font-bold">Settings</h2>
                 <p className="mt-1 text-sm text-gray-500">Manage your site settings, integrations, and tracking.</p>
+        {alert.show && <AlertBanner title={alert.type === 'success' ? 'Success' : 'Error'} message={alert.message} type={alert.type} onClose={() => setAlert({ show: false, message: '', type: 'info' })} />}
+
             </div>
+ 
             <SettingsTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+ 
             <div className="mt-8 bg-white p-8 rounded-lg">
                 {/* Now we pass the centralized state and functions down to the components */}
                 {activeTab === 'General' && <GeneralTabContent />}
@@ -651,6 +669,7 @@ export default function SettingsPage() {
                     <SocialConnectionsTabContent 
                         connectionStatus={connectionStatus} 
                         fetchConnections={fetchConnections} 
+                        setAlert={setAlert}
                     />
                 }
                 {activeTab === 'Widget Settings' && <WidgetSettingsTabContent siteId={session?.user?.site_id} />}
@@ -658,6 +677,7 @@ export default function SettingsPage() {
                     <PlatformsTabContent 
                         connectionStatus={connectionStatus} 
                         fetchConnections={fetchConnections} 
+                        setAlert={setAlert}
                     />
                 }
                 {activeTab === 'Billing' && <BillingTabContent />}

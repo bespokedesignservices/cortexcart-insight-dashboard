@@ -17,7 +17,6 @@ import TopReferrersList from '@/app/components/TopReferrersList';
 import DeviceChart from '@/app/components/DeviceChart';
 import LiveVisitorCount from '@/app/components/LiveVisitorCount';
 import SkeletonCard from '@/app/components/SkeletonCard';
-import CountryMapChart from '@/app/components/CountryMapChart';
 import Ga4LineChart from '@/app/components/Ga4LineChart';
 import PerformanceScore from '@/app/components/PerformanceScore';
 
@@ -215,7 +214,7 @@ export default function DashboardPage() {
               </ChartContainer>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <ChartContainer title="Visitors by Country" className="h-full">
-                  <CountryMapChart data={locationData} />
+                 
                 </ChartContainer>
                 <ChartContainer title="Recent Events">
                   <RecentEventsTable events={recentEvents} />

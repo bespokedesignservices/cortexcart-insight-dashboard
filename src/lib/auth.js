@@ -10,6 +10,8 @@ import axios from 'axios';
 import { encrypt } from '@/lib/crypto';
 
 export const authOptions = {
+      debug: process.env.NODE_ENV !== 'production', // Added debug for dev
+
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID,
@@ -41,6 +43,19 @@ export const authOptions = {
             userinfo: `${process.env.PINTEREST_API_URL}/v5/user_account`,
         }),
     ],
+    cookies: {
+    sessionToken: {
+        // The cookie name is now conditional
+        name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+        options: {
+            httpOnly: true,
+            sameSite: 'lax',
+            path: '/',
+            // This flag is also conditional
+            secure: process.env.NODE_ENV === 'production',
+        },
+    },
+},
     callbacks: {
         async signIn({ user, account }) {
 
@@ -56,16 +71,15 @@ export const authOptions = {
             
             const connection = await db.getConnection();
             try {
-                const [userResult] = await connection.query('SELECT * FROM sites WHERE user_email = ?', [email]);
+                const [userResult] = await db.query('SELECT * FROM sites WHERE user_email = ?', [email]);
                 if (userResult.length === 0) {
-                    await connection.query('INSERT INTO sites (user_email, site_name) VALUES (?, ?)', [email, `${name}'s Site`]);
+                    await db.query('INSERT INTO sites (user_email, site_name) VALUES (?, ?)', [email, `${name}'s Site`]);
                 }
             } catch (error) {
                 console.error("DB Error during signIn:", error);
                 return false;
-            } finally {
-                connection.release();
             }
+            // The finally block is no longer needed
             return true;
         },
     
@@ -137,30 +151,24 @@ export const authOptions = {
                 session.user.name = token.name;
                 session.user.image = token.picture;
             }
-            try {
+             try {
                 const [boards] = await db.query('SELECT board_id, board_name FROM pinterest_boards WHERE user_email = ?', [token.email]);
                 session.user.pinterestBoards = boards || [];
-            } catch (error) {
-                console.error("Error fetching Pinterest boards for session:", error);
-                session.user.pinterestBoards = [];
-            }
-            
-            if (session.user?.email) {
-                const connection = await db.getConnection();
-                try {
-                    const [siteRows] = await connection.query(
+                
+                if (session.user?.email) {
+                    const [siteRows] = await db.query(
                         'SELECT id FROM sites WHERE user_email = ? LIMIT 1',
                         [session.user.email]
                     );
                     if (siteRows.length > 0) {
                         session.user.site_id = siteRows[0].id;
                     }
-                } catch (error) {
-                    console.error("Error attaching site_id to session:", error);
-                } finally {
-                    connection.release();
                 }
+            } catch (error) {
+                console.error("Error attaching data to session:", error);
+                session.user.pinterestBoards = [];
             }
+            // The finally block is no longer needed
             return session;
         },
    },
