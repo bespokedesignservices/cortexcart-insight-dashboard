@@ -23,6 +23,10 @@ const tabs = [
 const GeneralTabContent = () => {
     const [siteName, setSiteName] = useState('');
     const [siteUrl, setSiteUrl] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
+    const [address, setAddress] = useState('');
+    const [postalCode, setPostalCode] = useState('');
     const [currency, setCurrency] = useState('USD');
     const [formMessage, setFormMessage] = useState({ text: '', isError: false });
     const [isSaving, setIsSaving] = useState(false);
@@ -39,6 +43,10 @@ const GeneralTabContent = () => {
                 const data = await res.json();
                 setSiteName(data.site_name || '');
                 setSiteUrl(data.site_url || '');
+                setFullName(data.full_name || '');
+                setEmail(data.email || '');
+                setAddress(data.address || '');
+                setPostalCode(data.postal_code || '');
                 setCurrency(data.currency || 'USD');
             }
         }
@@ -54,7 +62,7 @@ const GeneralTabContent = () => {
             const res = await fetch('/api/site-settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ siteName, siteUrl, currency })
+                body: JSON.stringify({ siteName, siteUrl, fullName, email, address, postalCode, currency })
             });
             if (!res.ok) throw new Error((await res.json()).message);
             setFormMessage({ text: 'Settings saved successfully!', isError: false });
@@ -76,6 +84,22 @@ const GeneralTabContent = () => {
                 <div>
                     <label htmlFor="siteUrl" className="block text-sm font-medium text-gray-700">Site URL</label>
                     <input type="url" id="siteUrl" value={siteUrl} onChange={(e) => setSiteUrl(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                </div>
+                <div>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">Full Name</label>
+                    <input type="text" id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                </div>
+                <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
+                    <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                </div>
+                <div>
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
+                    <input type="text" id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                </div>
+                <div>
+                    <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">Postal/Zip Code</label>
+                    <input type="text" id="postalCode" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
                 </div>
                 <div>
                     <label htmlFor="currency" className="block text-sm font-medium text-gray-700">Currency</label>
@@ -344,6 +368,21 @@ const SocialConnectionsTabContent = ({ connectionStatus, fetchConnections, setAl
 // --- New Platforms Component ---
 const PlatformsTabContent = ({ connectionStatus, fetchConnections, setAlert }) => {
     const [shopifyStore, setShopifyStore] = useState('');
+    const [storeInfo, setStoreInfo] = useState(null); // Add state for store info
+    const router = useRouter();
+    // Handle the connection
+useEffect(() => {
+        // Fetch store info if Shopify is connected
+        if (connectionStatus.shopify) {
+            const fetchStoreInfo = async () => {
+                const res = await fetch('/api/shopify/store-info');
+                if (res.ok) {
+                    setStoreInfo(await res.json());
+                }
+            };
+            fetchStoreInfo();
+        }
+    }, [connectionStatus.shopify]); // Re-run when connection status changes
 
     const handleDisconnect = async (platform) => {
         if (!confirm(`Are you sure you want to disconnect your ${platform} account?`)) return;
@@ -363,7 +402,16 @@ const PlatformsTabContent = ({ connectionStatus, fetchConnections, setAlert }) =
             setAlert({ show: true, message: err.message, type: 'danger' });
         }
     };    
-   
+      const handleShopifyConnect = () => {
+        if (!shopifyStore) {
+            alert('Please enter your store name.');
+            return;
+        }
+        // ✅ FIXED: Use window.location.href for a full browser navigation
+        window.location.href = `/api/connect/shopify?shop=${shopifyStore}`;
+    };
+
+
     return (
        <div className="max-w-3xl space-y-4">
              <h3 className="text-lg font-medium leading-6 text-gray-900">Platform Integrations</h3>
@@ -378,7 +426,7 @@ const PlatformsTabContent = ({ connectionStatus, fetchConnections, setAlert }) =
                         <button onClick={() => handleDisconnect('shopify')} className="text-sm font-medium text-red-600 hover:text-red-800">Disconnect</button>
                     </div>
                 ) : (
-                    <form action="/api/connect/shopify" method="POST" className="mt-3 flex items-center gap-x-2">
+       <div className="mt-3 flex items-center gap-x-2">
                         <div className="relative rounded-md shadow-sm">
                             <input
                                 type="text"
@@ -394,10 +442,14 @@ const PlatformsTabContent = ({ connectionStatus, fetchConnections, setAlert }) =
                                 <span className="text-gray-500 sm:text-sm">.myshopify.com</span>
                             </div>
                         </div>
-                        <button type="submit" className="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500">
+                        <button 
+                            type="button" 
+                            onClick={handleShopifyConnect}
+                            className="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500"
+                        >
                             Connect
                         </button>
-                    </form>
+                    </div>
                 )}
             </div>
  {/* --- THIS IS THE NEW MAILCHIMP Connection --- */}

@@ -5,18 +5,27 @@ import { db } from '@/lib/db';
 import { encrypt } from '@/lib/crypto';
 import axios from 'axios';
 
-export async function GET(request) {
+export async function GET(request) { // The 'request' object is our key
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.email) {
         return NextResponse.redirect(new URL('/login?error=unauthenticated', request.url));
     }
 
+
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const shop = searchParams.get('shop');
-    
+    const state = searchParams.get('state');
+    const savedState = request.cookies.get('shopify_oauth_state')?.value
+
     const redirectUrl = new URL('/settings?tab=Platforms', request.url);
 
+    if (!state || !savedState || state !== savedState) {
+        redirectUrl.searchParams.set('connect_status', 'error');
+        redirectUrl.searchParams.set('message', 'invalid_security_token');
+        return NextResponse.redirect(redirectUrl);
+    }
+    
     if (!code || !shop) {
         redirectUrl.searchParams.set('connect_status', 'error');
         redirectUrl.searchParams.set('message', 'invalid_callback');
@@ -30,7 +39,7 @@ export async function GET(request) {
             client_secret: process.env.SHOPIFY_API_SECRET,
             code: code,
         });
-
+        
         const accessToken = tokenResponse.data.access_token;
 
         // Save the encrypted token and shop name to the database
@@ -42,9 +51,10 @@ export async function GET(request) {
             shopify_shop_name = VALUES(shopify_shop_name);
         `;
         await db.query(query, [session.user.email, 'shopify', encrypt(accessToken), shop]);
-        
+
         redirectUrl.searchParams.set('connect_status', 'success');
         return NextResponse.redirect(redirectUrl);
+
 
     } catch (error) {
         console.error("Shopify callback error:", error.response?.data || error.message);

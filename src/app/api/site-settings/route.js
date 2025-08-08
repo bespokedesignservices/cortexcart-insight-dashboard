@@ -15,7 +15,7 @@ export async function GET() {
   const userEmail = session.user.email;
   try {
     const [rows] = await db.query(
-      'SELECT site_name, site_url, currency FROM sites WHERE user_email = ?',
+      'SELECT site_name, site_url, currency, full_name, email, address, postal_code FROM sites WHERE user_email = ?',
       [userEmail]
     );
     if (rows.length > 0) {
@@ -42,7 +42,7 @@ export async function POST(request) {
     }
     try {
         const query = `
-            INSERT INTO sites (user_email, site_name, site_url, currency)
+            INSERT INTO sites (user_email, site_name, site_url, currency, full_name, email, address, postal_code)
             VALUES (?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE 
                 site_name = VALUES(site_name), 

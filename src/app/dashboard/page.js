@@ -19,7 +19,7 @@ import LiveVisitorCount from '@/app/components/LiveVisitorCount';
 import SkeletonCard from '@/app/components/SkeletonCard';
 import Ga4LineChart from '@/app/components/Ga4LineChart';
 import PerformanceScore from '@/app/components/PerformanceScore';
-
+import OnboardingModal from '@/app/components/OnboardingModal';
 
 const currencySymbols = { USD: '$', EUR: '€', GBP: '£', JPY: '¥', CAD: '$', AUD: '$' };
 
@@ -31,9 +31,9 @@ const DataSourceToggle = ({ dataSource, setDataSource }) => (
 );
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
-
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   // State for CortexCart data
   const [stats, setStats] = useState(null);
   const [chartApiData, setChartApiData] = useState([]);
@@ -66,75 +66,86 @@ export default function DashboardPage() {
 
   const siteId = session?.user?.email;
 
-  useEffect(() => {
-    if (status === 'loading' || !siteId) return;
-    if (!session) { router.push('/'); return; }
+    useEffect(() => {
+        if (status === 'authenticated' && session?.user && !session.user.onboarding_completed) {
+            setIsOnboardingOpen(true);
+        }
+    }, [status, session]);
 
-    async function fetchData() {
-      setIsLoading(true);
-      setError('');
-      
-      const sd = dateRange.startDate ? `&startDate=${dateRange.startDate}` : '';
-      const ed = dateRange.endDate ? `&endDate=${dateRange.endDate}` : '';
-      const dateParams = `${sd}${ed}`;
-      
-      try {
-        const alertsRes = await fetch('/api/alerts/active');
-        if (alertsRes.ok) setAlerts(await alertsRes.json());
-      } catch (e) { console.error("Could not fetch alerts", e); }
+    const handleOnboardingComplete = () => {
+        setIsOnboardingOpen(false);
+        update(); // This call will now work correctly
+    };
 
-      if (dataSource === 'cortexcart') {
-        try {
-          const responses = await Promise.all([
-            fetch(`/api/stats?siteId=${siteId}${dateParams}`),
-            fetch(`/api/charts/sales-by-day?siteId=${siteId}${dateParams}`),
-            fetch(`/api/events?siteId=${siteId}${dateParams}`),
-            fetch(`/api/stats/top-pages?siteId=${siteId}${dateParams}`),
-            fetch(`/api/stats/top-referrers?siteId=${siteId}${dateParams}`),
-            fetch(`/api/stats/locations?siteId=${siteId}${dateParams}`),
-            fetch(`/api/site-settings?siteId=${siteId}`),
-            fetch(`/api/stats/device-types?siteId=${siteId}${dateParams}`),
-          ]);
+    // ✅ FIXED: Main data fetching logic is now correctly wrapped in useEffect
+    useEffect(() => {
+        // Guard clauses to prevent running fetches unnecessarily
+        if (status !== 'authenticated' || !siteId) {
+            return;
+        }
 
-          for (const res of responses) {
-            if (!res.ok) throw new Error(`A data fetch failed: ${res.statusText}`);
-          }
-          
-          const [statsData, chartData, eventsData, topPagesData, topReferrersData, locationsData, settingsData, deviceTypesData] = await Promise.all(responses.map(res => res.json()));
-                  console.log("Data received for locations:", locationsData);
+        const fetchData = async () => {
+            setIsLoading(true);
+            setError('');
+            
+            const sd = dateRange.startDate ? `&startDate=${dateRange.startDate}` : '';
+            const ed = dateRange.endDate ? `&endDate=${dateRange.endDate}` : '';
+            const dateParams = `${sd}${ed}`;
+            
+            try {
+                const alertsRes = await fetch('/api/alerts/active');
+                if (alertsRes.ok) setAlerts(await alertsRes.json());
+            } catch (e) { console.error("Could not fetch alerts", e); }
 
-          setStats(statsData);
-          setChartApiData(chartData);
-          setRecentEvents(eventsData);
-          setTopPages(topPagesData);
-          setTopReferrers(topReferrersData);
-          setLocationData(locationsData);
-          setSiteSettings(settingsData);
-          setDeviceData(deviceTypesData);
+            if (dataSource === 'cortexcart') {
+                try {
+                    const responses = await Promise.all([
+                        fetch(`/api/stats?siteId=${siteId}${dateParams}`),
+                        fetch(`/api/charts/sales-by-day?siteId=${siteId}${dateParams}`),
+                        fetch(`/api/events?siteId=${siteId}${dateParams}`),
+                        fetch(`/api/stats/top-pages?siteId=${siteId}${dateParams}`),
+                        fetch(`/api/stats/top-referrers?siteId=${siteId}${dateParams}`),
+                        fetch(`/api/site-settings?siteId=${siteId}`),
+                        fetch(`/api/stats/device-types?siteId=${siteId}${dateParams}`),
+                    ]);
 
-        } catch (err) { setError(err.message); }
-      } else { // Fetch from GA4
-        try {
-          const [statsRes, chartRes] = await Promise.all([
-              fetch(`/api/ga4-stats?siteId=${siteId}${dateParams}`),
-              fetch(`/api/ga4-charts?siteId=${siteId}${dateParams}`)
-          ]);
-          if (!statsRes.ok || !chartRes.ok) throw new Error('Failed to fetch GA4 data.');
-          const statsData = await statsRes.json();
-          const chartData = await chartRes.json();
-          setGa4Stats(statsData);
-          setGa4ChartData(chartData);
-        } catch (err) { setError(err.message); }
-      }
-      setIsLoading(false);
-    }
-    
-    fetchData();
-  }, [dateRange.startDate, dateRange.endDate, siteId, session, status, router, dataSource]);
+                    for (const res of responses) {
+                        if (!res.ok) throw new Error(`A data fetch failed: ${res.statusText}`);
+                    }
+                    
+                    const [statsData, chartData, eventsData, topPagesData, topReferrersData, settingsData, deviceTypesData] = await Promise.all(responses.map(res => res.json()));
+
+                    setStats(statsData);
+                    setChartApiData(chartData);
+                    setRecentEvents(eventsData);
+                    setTopPages(topPagesData);
+                    setTopReferrers(topReferrersData);
+                    setSiteSettings(settingsData);
+                    setDeviceData(deviceTypesData);
+
+                } catch (err) { setError(err.message); }
+            } else { // Fetch from GA4
+                try {
+                    const [statsRes, chartRes] = await Promise.all([
+                        fetch(`/api/ga4-stats?siteId=${siteId}${dateParams}`),
+                        fetch(`/api/ga4-charts?siteId=${siteId}${dateParams}`)
+                    ]);
+                    if (!statsRes.ok || !chartRes.ok) throw new Error('Failed to fetch GA4 data.');
+                    const statsData = await statsRes.json();
+                    const chartData = await chartRes.json();
+                    setGa4Stats(statsData);
+                    setGa4ChartData(chartData);
+                } catch (err) { setError(err.message); }
+            }
+            setIsLoading(false);
+        };
+        
+        fetchData();
+    }, [dateRange.startDate, dateRange.endDate, siteId, dataSource, status]);
   
   useEffect(() => {
     if (status === 'loading' || !siteId) return;
-    if (!session) { return; }
+    if (!siteId) { return; }
 
     async function fetchPerformanceData() {
         setPerformanceError('');
@@ -168,7 +179,7 @@ export default function DashboardPage() {
         .catch(console.error);
     }, 10000); 
     return () => clearInterval(interval);
-  }, [siteId, session, status]);
+  }, [siteId]);
   
   const handleDateFilterChange = (startDate, endDate) => { setDateRange({ startDate, endDate }); };
 
@@ -180,6 +191,12 @@ export default function DashboardPage() {
 
   return (
     <Layout>
+                 <OnboardingModal 
+                isOpen={isOnboardingOpen} 
+                onComplete={handleOnboardingComplete} 
+                siteId={session?.user?.site_id}
+            />
+
       <div className="space-y-4 mb-6 bg-grey-200">
         {alerts.map((alert) => (
             <AlertBanner key={alert.id} title={alert.title} message={alert.message} type={alert.type} />

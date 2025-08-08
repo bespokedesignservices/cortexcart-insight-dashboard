@@ -1,36 +1,37 @@
-// src/app/api/connect/shopify/route.js
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { randomBytes } from 'crypto';
 
-export async function POST(request) {
-    const formData = await request.formData();
-    const shop = formData.get('shop');
-
-    if (!shop) {
-        return NextResponse.json({ message: 'Missing shop name.' }, { status: 400 });
+export async function GET(request) {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+        return new Response('Not authenticated', { status: 401 });
     }
 
-    const shopName = shop.replace('.myshopify.com', '').trim();
-    const state = crypto.randomBytes(16).toString('hex');
-    const redirectUri = `${process.env.NEXTAUTH_URL}/connect/callback/shopify`;
-    const scopes = 'read_analytics,read_orders,read_products';
+    const { searchParams } = new URL(request.url);
+    const shop = searchParams.get('shop');
 
-    const installUrl = `https://${shopName}.myshopify.com/admin/oauth/authorize?client_id=${process.env.SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=${state}`;
+    if (!shop) {
+        return new Response('Shop name is required', { status: 400 });
+    }
+    
+    const state = randomBytes(16).toString('hex');
 
-    const response = NextResponse.redirect(installUrl);
+    const scopes = 'read_products,read_orders,read_analytics';
+    const redirectUri = `${process.env.NEXTAUTH_URL}/api/connect/shopify/callback`;
+    
+    const authUrl = `https:///${shop}.myshopify.com/admin/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_SHOPIFY_API_KEY}&scope=${scopes}&redirect_uri=${redirectUri}&state=${state}`;
 
+    const response = NextResponse.redirect(authUrl);
+    
+    // ✅ ADDED: Explicit cookie flags for better browser compatibility
     response.cookies.set('shopify_oauth_state', state, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
         path: '/',
-        sameSite: 'lax',
-    });
-
-     response.cookies.set('shopify_shop_name', shopName, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
+        maxAge: 600, // 10 minutes
         sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
     });
 
     return response;

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import RealTimeClock from './RealTimeClock';
 import { DocumentChartBarIcon } from '@heroicons/react/24/outline';
+import {material} from '@mui/material';
 import { 
     ChartPieIcon, Cog6ToothIcon, ArrowRightEndOnRectangleIcon, LightBulbIcon,
     MapIcon, TagIcon, Bars3Icon, XMarkIcon, InformationCircleIcon, 
@@ -191,6 +192,7 @@ const SidebarContent = () => {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const [isAiMenuOpen, setIsAiMenuOpen] = useState(false); // State for the new dropdown, default to open
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false); // State for the Tools dropdown
 
   const getLinkClass = (path) => {
     // All other links should be text-grey-900
@@ -223,7 +225,7 @@ const SidebarContent = () => {
                     </button>
                     {isAiMenuOpen && (
                         <ul className="pt-2 pl-7 mt-1 space-y-2 border-l border-gray-700 ml-4">
-                            <li><a href="/reports" className={getSubLinkClass('/reports')}><span>AI Reports</span></a></li>
+                            <li><a href="/reports" className={getSubLinkClass('/reports/ai')}><span>View AI Performance Report</span></a></li>
                             <li><a href="/recommendations" className={getSubLinkClass('/recommendations')}><span>Homepage AI</span></a></li>
                             <li><a href="/products/recommendations" className={getSubLinkClass('/products')}><span>Product AI</span></a></li>
                         </ul>
@@ -231,9 +233,28 @@ const SidebarContent = () => {
                 </li>
 
                 <li><a href="/social" className={getLinkClass('/social')}><ShareIcon className="h-6 w-6 mr-3" /><span>Social Manager</span></a></li>
-                <li><a href="/experiments" className={getLinkClass('/experiments')}><BeakerIcon className="h-6 w-6 mr-3" /><span>A/B Testing</span></a></li>
-                <li><a href="/heatmaps" className={getLinkClass('/heatmaps')}><FireIcon className="h-6 w-6 mr-3" /><span>Heatmaps</span></a></li>
-                <li className="pt-4 border-t border-gray-700 mt-4"><span className="px-2 text-xs font-semibold text-gray-400">Help & Support</span></li>
+                <li><a href="/financials" className={getLinkClass('/financials')}><DocumentChartBarIcon className="h-6 w-6 mr-3" /><span>Financials</span></a></li>
+               <li> {/* Tools Dropdown */}
+    <button 
+        onClick={() => setIsToolsMenuOpen(!isToolsMenuOpen)} 
+        className="flex items-center justify-between w-full p-2 text-gray-900 rounded-lg hover:bg-gray-600 hover:text-white transition-colors dark:text-gray-300"
+    >
+        <div className="flex items-center">
+            <Cog6ToothIcon className="h-6 w-6 mr-3" />
+            <span>Tools</span>
+        </div>
+       
+        <ChevronDownIcon className={`h-5 w-5 transition-transform ${isToolsMenuOpen ? 'rotate-180' : ''}`} />
+    </button>
+
+    
+    {isToolsMenuOpen && (
+        <ul className="pt-2 pl-7 mt-1 space-y-2 border-l border-gray-700 ml-4">
+            <li><a href="/experiments" className={getSubLinkClass('/experiments')}><span>A/B Testing</span></a></li>
+            <li><a href="/heatmaps" className={getSubLinkClass('/heatmaps')}><span>Heatmaps</span></a></li>
+        </ul>
+    )}
+</li>                <li className="pt-4 border-t border-gray-700 mt-4"><span className="px-2 text-xs font-semibold text-gray-400">Help & Support</span></li>
                 <li><a href="/install" className={getLinkClass('/install')}><PuzzlePieceIcon className="h-6 w-6 mr-3" /><span>Install Guides</span></a></li>
                 <li><a href="/faq" className={getLinkClass('/faq')}><QuestionMarkCircleIcon className="h-6 w-6 mr-3" /><span>FAQ</span></a></li>
                 <li><a href="/support" className={getLinkClass('/support')}><LifebuoyIcon className="h-6 w-6 mr-3" /><span>Support Tickets</span></a></li>

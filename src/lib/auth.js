@@ -164,13 +164,28 @@ export const authOptions = {
                         session.user.site_id = siteRows[0].id;
                     }
                 }
+                
             } catch (error) {
                 console.error("Error attaching data to session:", error);
                 session.user.pinterestBoards = [];
             }
-            // The finally block is no longer needed
-            return session;
-        },
+            if (session.user?.email) {
+        try {
+            // ✅ Add 'onboarding_completed' to the SELECT statement
+            const [siteRows] = await db.query(
+                'SELECT id, onboarding_completed FROM sites WHERE user_email = ? LIMIT 1',
+                [session.user.email]
+            );
+            if (siteRows.length > 0) {
+                session.user.site_id = siteRows[0].id;
+                session.user.onboarding_completed = siteRows[0].onboarding_completed; // ✅ Add the flag to the session
+            }
+        } catch (error) {
+            console.error("Error attaching site data to session:", error);
+        }
+    }
+    return session;
+},
    },
  
     session: {
